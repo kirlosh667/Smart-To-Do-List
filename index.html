@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskFlow | Smart To-Do & Productivity Manager</title>
+  <meta name="description" content="A modern, smart, responsive To-Do list web application with priority tracking, categories, stats, local storage persistence, and dark/light themes.">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Canvas Confetti for Celebration Effects -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- Main App Shell -->
+  <div class="app-wrapper">
+    
+    <!-- Top Header Navigation -->
+    <header class="app-header">
+      <div class="header-container">
+        
+        <!-- Logo & Branding -->
+        <div class="brand-group">
+          <div class="brand-icon">
+            <i class="fa-solid fa-check-double"></i>
+          </div>
+          <div class="brand-text">
+            <h1 class="brand-title">TaskFlow<span class="brand-badge">Pro</span></h1>
+            <p class="brand-subtitle">Smart Productivity & Task Manager</p>
+          </div>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="header-actions">
+          
+          <!-- Quick Today Date Badge -->
+          <div class="date-badge" id="currentDateBadge">
+            <i class="fa-regular fa-calendar"></i>
+            <span id="currentDateText">Today</span>
+          </div>
+
+          <!-- Quick New Task Button (Desktop) -->
+          <button class="btn btn-primary" id="openCreateModalBtn">
+            <i class="fa-solid fa-plus"></i>
+            <span>New Task</span>
+          </button>
+
+          <!-- Theme Toggle -->
+          <button class="theme-toggle-btn" id="themeToggleBtn" title="Switch Theme (Light/Dark)" aria-label="Toggle dark mode">
+            <i class="fa-solid fa-moon moon-icon"></i>
+            <i class="fa-solid fa-sun sun-icon"></i>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="main-content">
+      <div class="content-container">
+
+        <!-- ==============================================
+             HERO & LIVE STATS OVERVIEW SECTION
+             ============================================== -->
+        <section class="stats-section" aria-label="Task Statistics">
+          <div class="stats-header">
+            <div class="stats-greeting">
+              <h2 class="greeting-title" id="greetingText">Welcome back! 👋</h2>
+              <p class="greeting-desc" id="productivityQuote">Organize your goals, track priorities, and get things done.</p>
+            </div>
+            
+            <!-- Progress Bar Summary Card -->
+            <div class="progress-summary-card">
+              <div class="progress-info">
+                <span class="progress-label">Task Completion Rate</span>
+                <span class="progress-percentage" id="completionRateText">0%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="statsProgressBar" style="width: 0%;"></div>
+              </div>
+              <div class="progress-subtext" id="progressSubtext">0 of 0 tasks completed</div>
+            </div>
+          </div>
+
+          <!-- Interactive Metric Cards Grid -->
+          <div class="metrics-grid">
+            
+            <!-- Total Tasks -->
+            <div class="metric-card metric-total" data-filter="all" tabindex="0" role="button" title="View All Tasks">
+              <div class="metric-icon-box">
+                <i class="fa-solid fa-layer-group"></i>
+              </div>
+              <div class="metric-data">
+                <span class="metric-number" id="statTotalTasks">0</span>
+                <span class="metric-label">Total Tasks</span>
+              </div>
+              <span class="metric-indicator">All</span>
+            </div>
+
+            <!-- Pending Tasks -->
+            <div class="metric-card metric-pending" data-filter="pending" tabindex="0" role="button" title="View Pending Tasks">
+              <div class="metric-icon-box">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+              </div>
+              <div class="metric-data">
+                <span class="metric-number" id="statPendingTasks">0</span>
+                <span class="metric-label">In Progress</span>
+              </div>
+              <span class="metric-indicator pending-tag">Pending</span>
+            </div>
+
+            <!-- Completed Tasks -->
+            <div class="metric-card metric-completed" data-filter="completed" tabindex="0" role="button" title="View Completed Tasks">
+              <div class="metric-icon-box">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <div class="metric-data">
+                <span class="metric-number" id="statCompletedTasks">0</span>
+                <span class="metric-label">Completed</span>
+              </div>
+              <span class="metric-indicator completed-tag">Done</span>
+            </div>
+
+            <!-- High Priority -->
+            <div class="metric-card metric-priority" data-filter="high" tabindex="0" role="button" title="View High Priority Tasks">
+              <div class="metric-icon-box">
+                <i class="fa-solid fa-fire"></i>
+              </div>
+              <div class="metric-data">
+                <span class="metric-number" id="statHighPriority">0</span>
+                <span class="metric-label">High Priority</span>
+              </div>
+              <span class="metric-indicator priority-tag">Critical</span>
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- ==============================================
+             QUICK INLINE TASK ADDER BAR
+             ============================================== -->
+        <section class="quick-add-section">
+          <form class="quick-add-card" id="quickAddForm">
+            <div class="quick-add-left">
+              <div class="quick-add-icon">
+                <i class="fa-solid fa-bolt"></i>
+              </div>
+              <input 
+                type="text" 
+                id="quickAddInput" 
+                class="quick-input" 
+                placeholder="Quick add a new task... (Press Enter to add)" 
+                maxlength="120"
+                required
+                autocomplete="off"
+              >
+            </div>
+
+            <div class="quick-add-options">
+              <!-- Priority Selector -->
+              <div class="quick-select-wrap">
+                <i class="fa-solid fa-flag select-icon"></i>
+                <select id="quickAddPriority" class="quick-select" aria-label="Select priority">
+                  <option value="medium" selected>Medium Priority</option>
+                  <option value="high">High Priority</option>
+                  <option value="low">Low Priority</option>
+                </select>
+              </div>
+
+              <!-- Category Selector -->
+              <div class="quick-select-wrap">
+                <i class="fa-solid fa-folder select-icon"></i>
+                <select id="quickAddCategory" class="quick-select" aria-label="Select category">
+                  <option value="Work">Work</option>
+                  <option value="Personal" selected>Personal</option>
+                  <option value="Study">Study</option>
+                  <option value="Health">Health</option>
+                  <option value="Finance">Finance</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+
+              <!-- Quick Due Date -->
+              <div class="quick-date-wrap">
+                <input type="date" id="quickAddDueDate" class="quick-date-input" aria-label="Select due date">
+              </div>
+
+              <!-- Submit Button -->
+              <button type="submit" class="btn btn-primary btn-quick-submit" id="quickSubmitBtn">
+                <i class="fa-solid fa-plus"></i>
+                <span>Add Task</span>
+              </button>
+            </div>
+          </form>
+        </section>
+
+
+        <!-- ==============================================
+             TOOLBAR: SEARCH, FILTERS & CONTROLS
+             ============================================== -->
+        <section class="toolbar-section">
+          <div class="toolbar-top">
+            
+            <!-- Search Bar -->
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input 
+                type="text" 
+                id="searchInput" 
+                class="search-input" 
+                placeholder="Search tasks by title, category, or notes..." 
+                autocomplete="off"
+              >
+              <button class="clear-search-btn" id="clearSearchBtn" aria-label="Clear search" style="display: none;">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <!-- View Switcher & Actions -->
+            <div class="toolbar-actions">
+              
+              <!-- Sorting dropdown -->
+              <div class="dropdown-wrapper">
+                <label for="sortBySelect" class="sr-only">Sort by</label>
+                <div class="custom-select-icon">
+                  <i class="fa-solid fa-arrow-down-short-wide"></i>
+                </div>
+                <select id="sortBySelect" class="filter-dropdown" aria-label="Sort tasks">
+                  <option value="date-desc">Newest First</option>
+                  <option value="date-asc">Oldest First</option>
+                  <option value="due-soon">Due Date: Soonest</option>
+                  <option value="priority-desc">Priority: High to Low</option>
+                  <option value="title-asc">Alphabetical (A-Z)</option>
+                </select>
+              </div>
+
+              <!-- Grid / List View Toggle Buttons -->
+              <div class="view-switch-group" role="group" aria-label="View toggle">
+                <button class="view-btn active" id="viewGridBtn" title="Grid Card View" aria-label="Grid view">
+                  <i class="fa-solid fa-table-cells-large"></i>
+                </button>
+                <button class="view-btn" id="viewListBtn" title="Compact List View" aria-label="List view">
+                  <i class="fa-solid fa-list"></i>
+                </button>
+              </div>
+
+              <!-- Batch Action / Clear Completed -->
+              <button class="btn btn-outline btn-sm" id="clearCompletedBtn" title="Clear all finished tasks">
+                <i class="fa-solid fa-trash-can"></i>
+                <span>Clear Done</span>
+              </button>
+
+            </div>
+          </div>
+
+          <!-- Filter Tabs & Category Pills Row -->
+          <div class="filter-pills-row">
+            
+            <!-- Status Tabs -->
+            <div class="status-tabs" role="tablist">
+              <button class="filter-tab active" data-filter="all" role="tab" aria-selected="true">
+                <i class="fa-solid fa-border-all"></i>
+                <span>All Tasks</span>
+                <span class="tab-count" id="countAll">0</span>
+              </button>
+              <button class="filter-tab" data-filter="pending" role="tab" aria-selected="false">
+                <i class="fa-regular fa-circle"></i>
+                <span>Pending</span>
+                <span class="tab-count" id="countPending">0</span>
+              </button>
+              <button class="filter-tab" data-filter="completed" role="tab" aria-selected="false">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Completed</span>
+                <span class="tab-count" id="countCompleted">0</span>
+              </button>
+            </div>
+
+            <!-- Secondary Filters: Priority & Category Drops -->
+            <div class="filter-badges-group">
+              
+              <!-- Priority Filter -->
+              <div class="filter-chip-select">
+                <span class="chip-label"><i class="fa-solid fa-filter"></i> Priority:</span>
+                <select id="priorityFilterSelect" class="chip-dropdown" aria-label="Filter by priority">
+                  <option value="all">All Priorities</option>
+                  <option value="high">High Priority</option>
+                  <option value="medium">Medium Priority</option>
+                  <option value="low">Low Priority</option>
+                </select>
+              </div>
+
+              <!-- Category Filter -->
+              <div class="filter-chip-select">
+                <span class="chip-label"><i class="fa-solid fa-tags"></i> Category:</span>
+                <select id="categoryFilterSelect" class="chip-dropdown" aria-label="Filter by category">
+                  <option value="all">All Categories</option>
+                  <option value="Work">Work</option>
+                  <option value="Personal">Personal</option>
+                  <option value="Study">Study</option>
+                  <option value="Health">Health</option>
+                  <option value="Finance">Finance</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- ==============================================
+             TASKS CONTAINER & EMPTY STATES
+             ============================================== -->
+        <section class="tasks-section" aria-label="Task List">
+          
+          <!-- Section Heading with active filters info -->
+          <div class="tasks-header-row">
+            <div class="tasks-title-wrap">
+              <h3 class="tasks-heading" id="tasksSectionHeading">My Tasks</h3>
+              <span class="tasks-subheading" id="tasksActiveFilterDesc">Showing all items</span>
+            </div>
+            
+            <div class="tasks-counter-badge" id="tasksShowingCountBadge">
+              Showing 0 tasks
+            </div>
+          </div>
+
+          <!-- Dynamic Task Cards / List Container -->
+          <div class="task-items-container grid-view" id="tasksContainer">
+            <!-- Rendered dynamically by JavaScript -->
+          </div>
+
+          <!-- Empty State Display -->
+          <div class="empty-state-card" id="emptyState" style="display: none;">
+            <div class="empty-illustration">
+              <div class="empty-icon-circle">
+                <i class="fa-solid fa-clipboard-check"></i>
+              </div>
+            </div>
+            <h4 class="empty-title" id="emptyStateTitle">No tasks found</h4>
+            <p class="empty-desc" id="emptyStateDesc">You're all caught up! Click below to add a new task or adjust your search filters.</p>
+            <button class="btn btn-primary" id="emptyStateAddBtn">
+              <i class="fa-solid fa-plus"></i>
+              <span>Create New Task</span>
+            </button>
+          </div>
+
+        </section>
+
+      </div>
+    </main>
+
+    <!-- App Footer -->
+    <footer class="app-footer">
+      <div class="footer-container">
+        <p class="footer-copy">TaskFlow Pro &copy; 2026 &bull; Smart, Fast & Responsive Local Task Manager</p>
+        <div class="footer-links">
+          <button class="footer-link-btn" id="btnExportData" title="Export tasks to JSON">
+            <i class="fa-solid fa-download"></i> Export JSON
+          </button>
+          <button class="footer-link-btn" id="btnImportData" title="Import tasks from JSON">
+            <i class="fa-solid fa-upload"></i> Import JSON
+          </button>
+          <input type="file" id="importFileInput" accept=".json" style="display: none;">
+          <button class="footer-link-btn" id="btnResetDemo" title="Load sample demo data">
+            <i class="fa-solid fa-rotate"></i> Reset Demo
+          </button>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==============================================
+       MODAL: CREATE / EDIT TASK MODAL
+       ============================================== -->
+  <div class="modal-backdrop" id="taskModalBackdrop" aria-hidden="true">
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <div class="modal-icon-badge" id="modalIconBadge">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+          <div>
+            <h3 class="modal-title" id="modalTitle">Create New Task</h3>
+            <p class="modal-subtitle" id="modalSubtitle">Fill in the task details, priority, and schedule</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" id="closeModalBtn" aria-label="Close modal">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="taskModalForm" class="modal-body-form">
+        <input type="hidden" id="modalTaskId" value="">
+
+        <!-- Task Title -->
+        <div class="form-group">
+          <label for="modalTaskTitle" class="form-label">
+            Task Title <span class="required">*</span>
+          </label>
+          <div class="input-with-icon">
+            <i class="fa-solid fa-heading input-icon"></i>
+            <input 
+              type="text" 
+              id="modalTaskTitle" 
+              class="form-input" 
+              placeholder="e.g., Finalize project report & review architecture" 
+              maxlength="140"
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Task Description / Notes -->
+        <div class="form-group">
+          <label for="modalTaskDesc" class="form-label">Description / Notes</label>
+          <textarea 
+            id="modalTaskDesc" 
+            class="form-textarea" 
+            rows="3" 
+            placeholder="Add relevant notes, checklist details, or links..."
+            maxlength="500"
+          ></textarea>
+        </div>
+
+        <!-- Two Columns: Category & Priority -->
+        <div class="form-row">
+          
+          <!-- Category -->
+          <div class="form-group col-half">
+            <label for="modalTaskCategory" class="form-label">Category</label>
+            <div class="input-with-icon">
+              <i class="fa-solid fa-folder-open input-icon"></i>
+              <select id="modalTaskCategory" class="form-select">
+                <option value="Work">💼 Work</option>
+                <option value="Personal">🏠 Personal</option>
+                <option value="Study">📚 Study</option>
+                <option value="Health">🏃 Health</option>
+                <option value="Finance">💰 Finance</option>
+                <option value="General">⚡ General</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Priority -->
+          <div class="form-group col-half">
+            <label for="modalTaskPriority" class="form-label">Priority Level</label>
+            <div class="input-with-icon">
+              <i class="fa-solid fa-flag input-icon"></i>
+              <select id="modalTaskPriority" class="form-select">
+                <option value="high">🔥 High Priority</option>
+                <option value="medium" selected>⚡ Medium Priority</option>
+                <option value="low">🌱 Low Priority</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Due Date -->
+        <div class="form-group">
+          <label for="modalTaskDueDate" class="form-label">Due Date</label>
+          <div class="input-with-icon">
+            <i class="fa-regular fa-calendar-days input-icon"></i>
+            <input type="date" id="modalTaskDueDate" class="form-input">
+          </div>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelModalBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveModalBtn">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span id="saveModalBtnText">Save Task</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ==============================================
+       MODAL: CONFIRM DELETE MODAL
+       ============================================== -->
+  <div class="modal-backdrop" id="deleteConfirmModal" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-sm" role="dialog" aria-modal="true">
+      <div class="delete-modal-content">
+        <div class="delete-icon-circle">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3 class="delete-title">Delete Task?</h3>
+        <p class="delete-desc" id="deleteTaskTargetText">Are you sure you want to permanently remove this task?</p>
+        <div class="delete-actions">
+          <button class="btn btn-secondary" id="cancelDeleteBtn">Keep Task</button>
+          <button class="btn btn-danger" id="confirmDeleteBtn">
+            <i class="fa-solid fa-trash-can"></i> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript App Scripts -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
